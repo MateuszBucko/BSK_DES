@@ -19,14 +19,7 @@ public class Main {
         //64 bity klucza
         int[] keyArray = hexTextToBitArray(key);
 
-        System.out.println("Dane wejściowe: ");
-        for (int i = 0; i < inputArray.length; i++) {
-            System.out.print(inputArray[i]);
-            if (i % 8 == 7 && i != 0) {
-                System.out.print(" ");
-            }
-        }
-        System.out.println();
+
         System.out.println("Klucz: ");
         for (int i = 0; i < keyArray.length; i++) {
             System.out.print(keyArray[i]);
@@ -36,7 +29,7 @@ public class Main {
         }
         System.out.println();
         System.out.println("Klucz po permutacji PC1: ");
-        keyArray = permutePC(keyArray, Tables.PC1);
+        keyArray = permute(keyArray, Tables.PC1);
         for (int i = 0; i < keyArray.length; i++) {
             System.out.print(keyArray[i]);
             if (i % 7 == 6 && i != 0) {
@@ -78,15 +71,55 @@ public class Main {
         );
 
 
-        Map<String,int[]> mergedKeysMap = mergeKeys(subKeysMap);
-        mergedKeysMap.forEach((k,v) -> {
-            int[] permuted = permutePC(v, Tables.PC2);
+        Map<String, int[]> mergedKeysMap = mergeKeys(subKeysMap);
+        mergedKeysMap.forEach((k, v) -> {
+            int[] permuted = permute(v, Tables.PC2);
             System.out.println();
-            //System.out.print(k + "  ");
+            System.out.print(k + "  ");
             for (int i = 0; i < permuted.length; i++) {
                 System.out.print(permuted[i]);
             }
         });
+
+        System.out.println("Dane wejściowe: ");
+        for (int i = 0; i < inputArray.length; i++) {
+            System.out.print(inputArray[i]);
+            if (i % 8 == 7 && i != 0) {
+                System.out.print(" ");
+            }
+        }
+
+        System.out.println();
+        System.out.print("Dane wejściowe po permutacji IP: ");
+        int[] inputPermutedPC = permute(inputArray, Tables.IP);
+        for (int i = 0; i < inputPermutedPC.length; i++) {
+            System.out.print(inputPermutedPC[i]);
+            if (i % 8 == 7 && i != 0) {
+                System.out.print(" ");
+            }
+        }
+
+        System.out.println();
+        System.out.print("L0: ");
+        int[] L0 = getL0(inputPermutedPC);
+        for (int i = 0; i < L0.length; i++) {
+            System.out.print(L0[i]);
+            if (i % 8 == 7 && i != 0) {
+                System.out.print(" ");
+            }
+        }
+
+        System.out.println();
+        System.out.print("R0: ");
+        int[] R0 = getR0(inputPermutedPC);
+        for (int i = 0; i < R0.length; i++) {
+            System.out.print(R0[i]);
+            if (i % 8 == 7 && i != 0) {
+                System.out.print(" ");
+            }
+        }
+
+        
 
 
     }
@@ -109,23 +142,23 @@ public class Main {
         return array;
     }
 
-    public static int[] permutePC(int[] array, byte[] permuteTable) {
+    public static int[] permute(int[] array, byte[] permuteTable) {
         int[] tempTable = new int[permuteTable.length];
         int wsk = 0;
         for (int i = 0; i < permuteTable.length; i++) {
-                tempTable[wsk] = array[permuteTable[wsk] - 1];
-                wsk++;
+            tempTable[wsk] = array[permuteTable[wsk] - 1];
+            wsk++;
         }
         return tempTable;
     }
 
-    public static int[] permute(int[] array, byte[] permuteTable) {
-        int[] tempTable = new int[permuteTable.length];
-        for (int i = 0; i < array.length; i++) {
-            tempTable[i] = array[permuteTable[i] - 1];
-        }
-        return tempTable;
-    }
+//    public static int[] permute(int[] array, byte[] permuteTable) {
+//        int[] tempTable = new int[permuteTable.length];
+//        for (int i = 0; i < array.length; i++) {
+//            tempTable[i] = array[permuteTable[i] - 1];
+//        }
+//        return tempTable;
+//    }
 
     public static int[] split(int[] array, int beginIndex, int endIndex) {
         int[] result = new int[Math.abs(endIndex - beginIndex)];
@@ -143,6 +176,14 @@ public class Main {
 
     public static int[] getKeyD0(int[] array) {
         return split(array, 28, 56);
+    }
+
+    public static int[] getL0(int[] array) {
+        return split(array, 0, 32);
+    }
+
+    public static int[] getR0(int[] array) {
+        return split(array, 32, 64);
     }
 
     public static Map<String, int[]> createSubKeys(int[] c0, int[] d0) {
@@ -182,22 +223,22 @@ public class Main {
         return result;
     }
 
-    public static Map<String,int[]> mergeKeys(Map<String, int[]> map) {
-        Map<String,int[]> mergedKeysMap = new LinkedHashMap<>();
+    public static Map<String, int[]> mergeKeys(Map<String, int[]> map) {
+        Map<String, int[]> mergedKeysMap = new LinkedHashMap<>();
         for (int i = 0; i < 16; i++) {
             int[] temp = new int[56];
-            int[] c = map.get("c"+(i+1));
-            int[] d = map.get("d"+(i+1));
+            int[] c = map.get("c" + (i + 1));
+            int[] d = map.get("d" + (i + 1));
             int wsk = 0;
-            for(int j=0;j<28;j++){
-                temp[wsk]=c[j];
+            for (int j = 0; j < 28; j++) {
+                temp[wsk] = c[j];
                 wsk++;
             }
-            for(int k=0;k<28;k++){
-                temp[wsk]=d[k];
+            for (int k = 0; k < 28; k++) {
+                temp[wsk] = d[k];
                 wsk++;
             }
-            mergedKeysMap.put("K"+(i+1),temp);
+            mergedKeysMap.put("K" + (i + 1), temp);
         }
 
         return mergedKeysMap;
