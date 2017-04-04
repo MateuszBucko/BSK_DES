@@ -1,3 +1,6 @@
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -6,15 +9,140 @@ import java.util.*;
 public class Main {
 
     private static int[] L, R;
-    private static boolean cipher = true;
+    private static boolean cipher = false;
+    public static final String ANSI_RESET = "\u001B[0m";
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
 
-    public static void main(String[] args) {
-        // Scanner sc = new Scanner(System.in);
-        // System.out.println("Podaj 16 znaków w systemie szesnastkowym: ");
-        String input = "0123456789ABCDEF";
+    public static void main(String[] args) throws IOException {
+        Scanner sc = new Scanner(System.in);
+        int choose = -1;
 
-        // System.out.println("Podaj 16 znaków KLUCZA w systemie szesnastkowym: ");
-        String key = "133457799BBCDFF1";
+        while (choose != 0) {
+            createMenu();
+
+            System.out.print(ANSI_GREEN + "Choose option: " + ANSI_RESET);
+            try {
+                choose = sc.nextInt();
+                sc.nextLine();
+            } catch (Exception e) {
+                System.out.println("Choose number !");
+                sc.nextLine();
+                choose = -1;
+
+            }
+
+            switch (choose) {
+                case 1:
+                    System.out.println("Podaj 16 znaków w systemie szesnastkowym: ");
+                    //String input = "0123456789ABCDEF";
+                    String input = sc.nextLine();
+                    System.out.println("Podaj 16 znaków KLUCZA w systemie szesnastkowym: ");
+                    //String key = "133457799BBCDFF1";
+                    String key = sc.nextLine();
+                    cipher = true;
+
+                    DES(input, key);
+                    break;
+
+                case 2:
+                    System.out.println("Podaj 16 znaków w systemie szesnastkowym: ");
+                    //String input = "0123456789ABCDEF";
+                    String inputDecipher = sc.nextLine();
+                    System.out.println("Podaj 16 znaków KLUCZA w systemie szesnastkowym: ");
+                    //String key = "133457799BBCDFF1";
+                    String keyDecipher = sc.nextLine();
+                    cipher = false;
+                    DES(inputDecipher, keyDecipher);
+                    break;
+                case 3:
+                    cipher=true;
+                    case3();
+
+                    break;
+                case 4:
+                    cipher=false;
+                    case3();
+                    break;
+            }
+
+
+        }
+
+
+    }
+
+
+    private static void case3() throws IOException {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("File name to encode: ");
+        String fileName = sc.nextLine();
+
+        System.out.print("Result file name: ");
+        String resultFileName = sc.nextLine();
+
+//                    System.out.println("Podaj 16 znaków (szesnastkowych) klucza: ");
+        String keyFronEcryptBinaryFile = "133457799BBCDFF1";
+
+        int[] keyArray1 = new int[keyFronEcryptBinaryFile.length()];
+
+
+        int[] keyArray;
+        keyArray = hexTextToBitArray(keyFronEcryptBinaryFile);
+        for(int i=0;i<keyArray.length;i++){
+            System.out.print(keyArray[i]);
+        }
+
+        File file = new File(fileName);
+        byte[] fileData = new byte[(int) file.length()];
+        DataInputStream dis = new DataInputStream(new FileInputStream(file));
+        dis.readFully(fileData);
+
+        int loops = fileData.length / 8;
+
+
+
+        byte[] result = new byte[(int) file.length()];
+
+
+        int wsk = 0;
+        int resultIdx = 0;
+        for (int i = 0; i < loops; i++) {
+            StringBuilder bits = new StringBuilder(64);
+            for (int j = 0; j < 8; j++) {
+                bits.append(String.format("%8s", Integer.toBinaryString(fileData[wsk] & 0xFF)).replace(' ', '0'));
+                wsk++;
+            }
+
+            int[] bitsArray = new int[bits.length()];
+            for(int k=0;k<bits.length();k++){
+                bitsArray[k] = Character.getNumericValue(bits.charAt(k));
+            }
+
+            int[] desArray = DESForBinary(bitsArray, keyArray);
+            String desArrayString = Arrays.toString(desArray).replaceAll("\\[|\\]|,|\\s", "");
+            for(int l=0;l<8;l++){
+                Byte resByte = (byte) (int) Integer.valueOf(desArrayString.substring(l*8,l*8+7), 2);
+                result[resultIdx++] = resByte;
+
+            }
+
+        }
+
+        Files.write(Paths.get(resultFileName), result);
+        dis.close();
+    }
+
+    private static void createMenu() {
+        System.out.println();
+        System.out.println(ANSI_RED + "1. Encrypt DES ");
+        System.out.println("2. Decrypt Des");
+        System.out.println("3. Encrypt file with DES ");
+        System.out.println("4. Decrypt file with DES " + ANSI_RESET);
+    }
+
+    public static void DES(String input, String key) {
+
 
         //64 bity wejściowe
         int[] inputArray = hexTextToBitArray(input);
@@ -177,9 +305,112 @@ public class Main {
             }
         }
         System.out.println();
-        System.out.print("Wynik szyfrowania: ");
+        if (cipher) {
+            System.out.print("Wynik szyfrowania: ");
+        } else {
+            System.out.print("Wynik deszyfrowania: ");
+        }
         System.out.println();
         System.out.print(bitArrayToHexText(finalArrayPermuted));
+    }
+
+
+    public static int[] DESForBinary(int[] inputArray, int[] keyArray) {
+
+
+
+        keyArray = permute(keyArray, Tables.PC1);
+
+
+        int[] c0 = getKeyC0(keyArray);
+        int[] d0 = getKeyD0(keyArray);
+
+
+        Map<String, int[]> subKeysMap = createSubKeys(c0, d0);
+
+
+        Map<String, int[]> mergedKeysMap = mergeKeys(subKeysMap);
+        mergedKeysMap.forEach((k, v) -> {
+            int[] permuted = permute(v, Tables.PC2);
+            mergedKeysMap.put(k, permuted);
+        });
+
+        int[] inputPermutedPC = permute(inputArray, Tables.IP);
+
+
+        int[] L0 = getL0(inputPermutedPC);
+        int[] R0 = getR0(inputPermutedPC);
+
+
+        L = new int[32];
+        R = new int[32];
+        //wstawienie w tablice L i R wszystkie bity z tablic L0, R0 wygenerowanych na podstawie danych wejściowych (po 32 bity każda)
+        for (int i = 0; i < L0.length; i++) {
+            L[i] = L0[i];
+            R[i] = R0[i];
+        }
+
+
+        if (cipher) {
+            for (int i = 1; i <= 16; i++) {
+                SloopForBinary(mergedKeysMap, i);
+            }
+        } else {
+            for (int i = 16; i > 0; i--) {
+                SloopForBinary(mergedKeysMap, i);
+            }
+        }
+
+        int[] finalLandRArray = new int[64];
+        for (int i = 0; i < 32; i++) {
+            finalLandRArray[i] = R[i];
+        }
+        int wsk = 0;
+        for (int i = 32; i < 64; i++) {
+            finalLandRArray[i] = L[wsk];
+            wsk++;
+        }
+
+        int[] finalArrayPermuted = permute(finalLandRArray, Tables.FP);
+
+
+        return finalArrayPermuted;
+
+    }
+
+    public static void SloopForBinary(Map<String, int[]> mergedKeysMap, int i) {
+
+        //permutacja E tablic
+        //L = permute(L, Tables.E);
+
+        int[] permutedR = permute(R, Tables.E);
+
+
+
+        int[] xored_R = new int[permutedR.length];
+        int[] fKey = mergedKeysMap.get("K" + (i));
+
+
+        //xorowanie tablicy R z kluczem
+        for (int j = 0; j < permutedR.length; j++) {
+            xored_R[j] = (permutedR[j] + fKey[j]) % 2;
+        }
+
+
+        //przetworzenie tablicy R przez funkcję f
+        int[] afterF = functionF(xored_R);
+
+        afterF = permute(afterF, Tables.P);
+
+
+        int[] resultTab = new int[32];
+        for (int j = 0; j < afterF.length; j++) {
+
+            resultTab[j] = (afterF[j] + L[j]) % 2;
+        }
+
+        System.arraycopy(R, 0, L, 0, L.length);
+        R = resultTab;
 
 
     }
@@ -282,7 +513,6 @@ public class Main {
                 System.out.print(" ");
             }
         }
-
 
     }
 
