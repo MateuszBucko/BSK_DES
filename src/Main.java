@@ -5,6 +5,8 @@ import java.util.*;
  */
 public class Main {
 
+    private static int[] L, R;
+    private static boolean cipher = true;
 
     public static void main(String[] args) {
         // Scanner sc = new Scanner(System.in);
@@ -120,7 +122,7 @@ public class Main {
             }
         }
 
-        int[] L, R;
+
         L = new int[32];
         R = new int[32];
         //wstawienie w tablice L i R wszystkie bity z tablic L0, R0 wygenerowanych na podstawie danych wejściowych (po 32 bity każda)
@@ -132,105 +134,17 @@ public class Main {
 
         System.out.println();
         System.out.print("Przejście przez permutację E i funkcję F");
-        for (int i = 0; i < 16; i++) {
-            //permutacja E tablic
-            //L = permute(L, Tables.E);
 
-            int[] permutedR = permute(R, Tables.E);
-
-            System.out.println();
-            System.out.print("Tablica R po permutacji E");
-            System.out.println();
-            for (int k = 0; k < permutedR.length; k++) {
-                System.out.print(permutedR[k]);
-                if (k % 6 == 5 && k != 0) {
-                    System.out.print(" ");
-                }
+        if (cipher) {
+            for (int i = 1; i <= 16; i++) {
+                Sloop(mergedKeysMap, i);
             }
-
-            int[] xored_R = new int[permutedR.length];
-            int[] fKey = mergedKeysMap.get("K" + (i + 1));
-
-
-            System.out.println();
-            System.out.print("Klucz");
-            System.out.println();
-            for (int k = 0; k < fKey.length; k++) {
-                System.out.print(fKey[k]);
-                if (k % 6 == 5 && k != 0) {
-                    System.out.print(" ");
-                }
+        } else {
+            for (int i = 16; i > 0; i--) {
+                Sloop(mergedKeysMap, i);
             }
-
-
-            //xorowanie tablicy R z kluczem
-            for (int j = 0; j < permutedR.length; j++) {
-                xored_R[j] = (permutedR[j] + fKey[j]) % 2;
-            }
-            System.out.println();
-            System.out.print("Tablica zXORowana z kluczem");
-            System.out.println();
-            for (int l = 0; l < xored_R.length; l++) {
-                System.out.print(xored_R[l]);
-                if (l % 6 == 5 && l != 0) {
-                    System.out.print(" ");
-                }
-            }
-
-            //przetworzenie tablicy R przez funkcję f
-            int[] afterF = functionF(xored_R);
-            System.out.println();
-            System.out.print("Wynik F: ");
-            System.out.println();
-            for (int l = 0; l < afterF.length; l++) {
-                System.out.print(afterF[l]);
-                if (l % 4 == 3 && l != 0) {
-                    System.out.print(" ");
-                }
-            }
-            System.out.println();
-            System.out.print("Wynik F po permutacji P: ");
-            System.out.println();
-            afterF = permute(afterF, Tables.P);
-            for (int l = 0; l < afterF.length; l++) {
-                System.out.print(afterF[l]);
-                if (l % 4 == 3 && l != 0) {
-                    System.out.print(" ");
-                }
-            }
-
-
-            int[] resultTab = new int[32];
-            for (int j = 0; j < afterF.length; j++) {
-
-                resultTab[j] = (afterF[j] + L[j]) % 2;
-            }
-
-            System.arraycopy(R, 0, L, 0, L.length);
-            R = resultTab;
-
-
-            System.out.println();
-            System.out.print("L:" + i);
-            System.out.println();
-            for (int l = 0; l < L.length; l++) {
-                System.out.print(L[l]);
-                if (l % 4 == 3 && l != 0) {
-                    System.out.print(" ");
-                }
-            }
-            System.out.println();
-            System.out.print("R:" + i);
-            System.out.println();
-            for (int l = 0; l < R.length; l++) {
-                System.out.print(R[l]);
-                if (l % 4 == 3 && l != 0) {
-                    System.out.print(" ");
-                }
-            }
-
-
         }
+
 
         int[] finalLandRArray = new int[64];
         for (int i = 0; i < 32; i++) {
@@ -266,6 +180,108 @@ public class Main {
         System.out.print("Wynik szyfrowania: ");
         System.out.println();
         System.out.print(bitArrayToHexText(finalArrayPermuted));
+
+
+    }
+
+
+    public static void Sloop(Map<String, int[]> mergedKeysMap, int i) {
+
+        //permutacja E tablic
+        //L = permute(L, Tables.E);
+
+        int[] permutedR = permute(R, Tables.E);
+
+        System.out.println();
+        System.out.print("Tablica R po permutacji E");
+        System.out.println();
+        for (int k = 0; k < permutedR.length; k++) {
+            System.out.print(permutedR[k]);
+            if (k % 6 == 5 && k != 0) {
+                System.out.print(" ");
+            }
+        }
+
+        int[] xored_R = new int[permutedR.length];
+        int[] fKey = mergedKeysMap.get("K" + (i));
+
+
+        System.out.println();
+        System.out.print("Klucz");
+        System.out.println();
+        for (int k = 0; k < fKey.length; k++) {
+            System.out.print(fKey[k]);
+            if (k % 6 == 5 && k != 0) {
+                System.out.print(" ");
+            }
+        }
+
+
+        //xorowanie tablicy R z kluczem
+        for (int j = 0; j < permutedR.length; j++) {
+            xored_R[j] = (permutedR[j] + fKey[j]) % 2;
+        }
+        System.out.println();
+        System.out.print("Tablica zXORowana z kluczem");
+        System.out.println();
+        for (int l = 0; l < xored_R.length; l++) {
+            System.out.print(xored_R[l]);
+            if (l % 6 == 5 && l != 0) {
+                System.out.print(" ");
+            }
+        }
+
+        //przetworzenie tablicy R przez funkcję f
+        int[] afterF = functionF(xored_R);
+        System.out.println();
+        System.out.print("Wynik F: ");
+        System.out.println();
+        for (int l = 0; l < afterF.length; l++) {
+            System.out.print(afterF[l]);
+            if (l % 4 == 3 && l != 0) {
+                System.out.print(" ");
+            }
+        }
+        System.out.println();
+        System.out.print("Wynik F po permutacji P: ");
+        System.out.println();
+        afterF = permute(afterF, Tables.P);
+        for (int l = 0; l < afterF.length; l++) {
+            System.out.print(afterF[l]);
+            if (l % 4 == 3 && l != 0) {
+                System.out.print(" ");
+            }
+        }
+
+
+        int[] resultTab = new int[32];
+        for (int j = 0; j < afterF.length; j++) {
+
+            resultTab[j] = (afterF[j] + L[j]) % 2;
+        }
+
+        System.arraycopy(R, 0, L, 0, L.length);
+        R = resultTab;
+
+
+        System.out.println();
+        System.out.print("L:" + i);
+        System.out.println();
+        for (int l = 0; l < L.length; l++) {
+            System.out.print(L[l]);
+            if (l % 4 == 3 && l != 0) {
+                System.out.print(" ");
+            }
+        }
+        System.out.println();
+        System.out.print("R:" + i);
+        System.out.println();
+        for (int l = 0; l < R.length; l++) {
+            System.out.print(R[l]);
+            if (l % 4 == 3 && l != 0) {
+                System.out.print(" ");
+            }
+        }
 
 
     }
