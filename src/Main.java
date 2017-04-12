@@ -57,12 +57,12 @@ public class Main {
                     break;
                 case 3:
                     cipher=true;
-                    case3();
+                    criyptingBinaryFile();
 
                     break;
                 case 4:
                     cipher=false;
-                    case3();
+                    criyptingBinaryFile();
                     break;
             }
 
@@ -73,7 +73,7 @@ public class Main {
     }
 
 
-    private static void case3() throws IOException {
+    private static void criyptingBinaryFile() throws IOException {
         Scanner sc = new Scanner(System.in);
         System.out.print("File name to encode: ");
         String fileName = sc.nextLine();
